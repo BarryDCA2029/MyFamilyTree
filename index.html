@@ -9,11 +9,12 @@
     <style>
         body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
         
-        .tree-container { overflow-x: auto; padding-bottom: 20px; }
+        .tree-container { overflow-x: auto; padding-bottom: 40px; }
         .tree { display: flex; justify-content: center; min-width: max-content; }
         .tree ul { padding-top: 20px; position: relative; display: flex; justify-content: center; padding-left: 0; }
         .tree li { text-align: center; list-style-type: none; position: relative; padding: 20px 10px 0 10px; }
         
+        /* เส้นเชื่อมแนวนอน */
         .tree li::before, .tree li::after {
             content: ''; position: absolute; top: 0; right: 50%;
             border-top: 2px solid #10b981; width: 50%; height: 20px;
@@ -27,6 +28,7 @@
         .tree li:last-child::before { border-right: 2px solid #10b981; border-radius: 0 5px 0 0; }
         .tree li:first-child::after { border-radius: 5px 0 0 0; }
         
+        /* เส้นตั้งลงมาหาลูก */
         .tree ul ul::before {
             content: ''; position: absolute; top: 0; left: 50%;
             border-left: 2px solid #10b981; width: 0; height: 20px;
@@ -36,11 +38,12 @@
             border: 1px solid #e5e7eb; padding: 15px 10px;
             background-color: white; border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            min-width: 140px; max-width: 160px; display: inline-block;
+            min-width: 140px; max-width: 160px; 
+            display: inline-block; position: relative; z-index: 10;
         }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-6">
     <div class="max-w-4xl mx-auto space-y-6">
         <div class="text-center">
             <h1 class="text-3xl font-bold text-gray-800">🌳 ระบบบันทึกเชื้อสายเครือญาติ</h1>
@@ -50,16 +53,27 @@
         <div class="bg-white p-6 rounded-xl shadow-md">
             <h2 class="text-xl font-semibold mb-4 text-green-700" id="formTitle">เพิ่มสมาชิกใหม่</h2>
             <form id="memberForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><label class="block text-sm text-gray-600 mb-1">ชื่อ-นามสกุล</label><input type="text" id="name" required class="w-full border border-gray-300 rounded-lg p-2"></div>
-                <div><label class="block text-sm text-gray-600 mb-1">ความสัมพันธ์</label><input type="text" id="relation" placeholder="เช่น ปู่, พ่อ" required class="w-full border border-gray-300 rounded-lg p-2"></div>
+                <div><label class="block text-sm text-gray-600 mb-1">ชื่อ-นามสกุล</label><input type="text" id="name" required class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"></div>
+                <div><label class="block text-sm text-gray-600 mb-1">ความสัมพันธ์</label><input type="text" id="relation" placeholder="เช่น ปู่, พ่อ, ภรรยา" required class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"></div>
                 <div><label class="block text-sm text-gray-600 mb-1">เบอร์โทรศัพท์</label><input type="tel" id="phone" class="w-full border border-gray-300 rounded-lg p-2"></div>
                 <div><label class="block text-sm text-gray-600 mb-1">จังหวัดที่อยู่ปัจจุบัน</label><input type="text" id="location" class="w-full border border-gray-300 rounded-lg p-2"></div>
                 <div class="md:col-span-2"><label class="block text-sm text-gray-600 mb-1">ลิงก์รูปภาพโปรไฟล์ (URL)</label><input type="url" id="imageUrl" class="w-full border border-gray-300 rounded-lg p-2"></div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm text-gray-600 mb-1">เชื่อมโยงกับ (ระบุชื่อพ่อ/แม่)</label>
-                    <select id="parentId" class="w-full border border-gray-300 rounded-lg p-2"><option value="">-- เป็นจุดเริ่มต้นสายตระกูล (Root) --</option></select>
+                
+                <!-- เลือกบุคคลอ้างอิง -->
+                <div class="md:col-span-1">
+                    <label class="block text-sm text-gray-600 mb-1">เชื่อมโยงกับ (ระบุบุคคลอ้างอิง)</label>
+                    <select id="linkedId" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"><option value="">-- เป็นจุดเริ่มต้นสายตระกูล (Root) --</option></select>
                 </div>
-                <div class="md:col-span-2 text-right mt-2">
+                <!-- เลือกประเภทการเชื่อมโยง (ลูก หรือ คู่สมรส) -->
+                <div class="md:col-span-1">
+                    <label class="block text-sm text-gray-600 mb-1">สถานะต่อบุคคลอ้างอิง</label>
+                    <select id="linkType" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500">
+                        <option value="child">เป็น "บุตร" (ต่อสายลงด้านล่าง)</option>
+                        <option value="spouse">เป็น "คู่สมรส" (วางเคียงข้างกัน)</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2 text-right mt-2 flex justify-end">
                     <button type="button" id="cancelBtn" onclick="cancelEdit()" class="hidden bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-500 mr-2">ยกเลิก</button>
                     <button type="submit" id="submitBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700">+ บันทึกข้อมูล</button>
                 </div>
@@ -74,10 +88,22 @@
 
     <script>
         let familyMembers = JSON.parse(localStorage.getItem('familyData')) || [];
-        let editingId = null; // ตัวแปรสำหรับเช็คว่ากำลังแก้ไขใครอยู่
+        
+        // อัปเดตข้อมูลเก่าให้เข้ากับระบบใหม่แบบอัตโนมัติ
+        familyMembers = familyMembers.map(m => {
+            if (m.parentId !== undefined) {
+                m.linkedId = m.parentId;
+                m.linkType = 'child';
+                delete m.parentId;
+            }
+            return m;
+        });
+
+        let editingId = null;
 
         const form = document.getElementById('memberForm');
-        const parentSelect = document.getElementById('parentId');
+        const linkedSelect = document.getElementById('linkedId');
+        const linkTypeSelect = document.getElementById('linkType');
         const treeContainer = document.getElementById('treeContainer');
         const submitBtn = document.getElementById('submitBtn');
         const cancelBtn = document.getElementById('cancelBtn');
@@ -94,18 +120,15 @@
                 phone: document.getElementById('phone').value,
                 location: document.getElementById('location').value,
                 imageUrl: document.getElementById('imageUrl').value,
-                parentId: document.getElementById('parentId').value || null
+                linkedId: document.getElementById('linkedId').value || null,
+                linkType: document.getElementById('linkedId').value ? document.getElementById('linkType').value : 'root'
             };
 
             if (editingId) {
-                // กรณีแก้ไขข้อมูลเดิม
                 const index = familyMembers.findIndex(m => m.id === editingId);
-                if(index !== -1) {
-                    familyMembers[index] = { ...familyMembers[index], ...memberData };
-                }
-                cancelEdit(); // คืนค่าฟอร์มกลับเป็นโหมดเพิ่มข้อมูลปกติ
+                if(index !== -1) familyMembers[index] = { ...familyMembers[index], ...memberData };
+                cancelEdit();
             } else {
-                // กรณีเพิ่มข้อมูลใหม่
                 memberData.id = Date.now().toString();
                 familyMembers.push(memberData);
                 form.reset();
@@ -116,7 +139,6 @@
             renderTree();
         });
 
-        // ฟังก์ชันดึงข้อมูลมาใส่ฟอร์มเพื่อแก้ไข
         window.editMember = function(id) {
             const member = familyMembers.find(m => m.id === id);
             if(!member) return;
@@ -126,20 +148,18 @@
             document.getElementById('phone').value = member.phone || '';
             document.getElementById('location').value = member.location || '';
             document.getElementById('imageUrl').value = member.imageUrl || '';
-            document.getElementById('parentId').value = member.parentId || '';
+            document.getElementById('linkedId').value = member.linkedId || '';
+            document.getElementById('linkType').value = member.linkType === 'spouse' ? 'spouse' : 'child';
 
             editingId = id;
             formTitle.innerText = '✏️ แก้ไขข้อมูลสมาชิก';
             formTitle.classList.replace('text-green-700', 'text-blue-700');
             submitBtn.innerText = '💾 บันทึกการแก้ไข';
             submitBtn.classList.replace('bg-green-600', 'bg-blue-600');
-            submitBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
             cancelBtn.classList.remove('hidden');
-
-            window.scrollTo({ top: 0, behavior: 'smooth' }); // เลื่อนจอขึ้นไปบนสุด
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        // ฟังก์ชันยกเลิกการแก้ไข
         window.cancelEdit = function() {
             editingId = null;
             form.reset();
@@ -147,20 +167,39 @@
             formTitle.classList.replace('text-blue-700', 'text-green-700');
             submitBtn.innerText = '+ บันทึกข้อมูล';
             submitBtn.classList.replace('bg-blue-600', 'bg-green-600');
-            submitBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
             cancelBtn.classList.add('hidden');
         };
 
         function saveData() { localStorage.setItem('familyData', JSON.stringify(familyMembers)); }
 
         function updateSelectDropdown() {
-            parentSelect.innerHTML = '<option value="">-- เป็นจุดเริ่มต้นสายตระกูล (Root) --</option>';
+            linkedSelect.innerHTML = '<option value="">-- เป็นจุดเริ่มต้นสายตระกูล (Root) --</option>';
             familyMembers.forEach(member => {
                 const option = document.createElement('option');
                 option.value = member.id;
                 option.textContent = member.name;
-                parentSelect.appendChild(option);
+                linkedSelect.appendChild(option);
             });
+        }
+
+        function createCardHTML(person) {
+            const imageDisplay = person.imageUrl 
+                ? `<img src="${person.imageUrl}" alt="${person.name}" class="w-14 h-14 rounded-full object-cover border-4 border-green-100 mx-auto mb-2 shadow-sm">`
+                : `<div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold border-4 border-white shadow-sm text-xl mx-auto mb-2">${person.name.charAt(0)}</div>`;
+
+            return `
+                <div class="tree-node-card">
+                    ${imageDisplay}
+                    <div class="font-bold text-gray-800 text-sm break-words">${person.name}</div>
+                    <div class="text-xs text-white ${person.linkType === 'spouse' ? 'bg-pink-500' : 'bg-green-500'} rounded-full px-2 py-1 mt-1 inline-block">${person.relation}</div>
+                    ${person.location ? `<div class="text-xs text-gray-500 mt-2">📍 ${person.location}</div>` : ''}
+                    ${person.phone ? `<div class="text-xs text-gray-500 mt-1">📞 ${person.phone}</div>` : ''}
+                    <div class="mt-3 flex justify-center space-x-3">
+                        <button onclick="editMember('${person.id}')" class="text-blue-500 text-xs hover:text-blue-700 underline">แก้ไข</button>
+                        <button onclick="deleteMember('${person.id}')" class="text-red-400 text-xs hover:text-red-600 underline">ลบ</button>
+                    </div>
+                </div>
+            `;
         }
 
         function renderTree() {
@@ -170,7 +209,8 @@
             }
             treeContainer.innerHTML = '';
             
-            const rootMembers = familyMembers.filter(m => !m.parentId);
+            // หาคนที่เป็นจุดเริ่มต้น (ไม่มีการเชื่อมโยงกับใคร)
+            const rootMembers = familyMembers.filter(m => !m.linkedId);
             
             const treeDiv = document.createElement('div');
             treeDiv.className = 'tree';
@@ -187,26 +227,32 @@
         function buildNodeHTML(member) {
             const li = document.createElement('li');
             
-            const imageDisplay = member.imageUrl 
-                ? `<img src="${member.imageUrl}" alt="${member.name}" class="w-14 h-14 rounded-full object-cover border-4 border-green-100 mx-auto mb-2 shadow-sm">`
-                : `<div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold border-4 border-white shadow-sm text-xl mx-auto mb-2">${member.name.charAt(0)}</div>`;
+            // หาคู่สมรสของคนนี้
+            const spouses = familyMembers.filter(m => m.linkedId === member.id && m.linkType === 'spouse');
+            
+            // สร้างกลุ่มสำหรับวางเคียงข้างกัน
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'flex items-center justify-center';
+            
+            // ใส่การ์ดคนหลัก
+            groupDiv.innerHTML = createCardHTML(member);
+            
+            // ใส่การ์ดคู่สมรสเคียงข้าง (ถ้ามี)
+            spouses.forEach(spouse => {
+                groupDiv.innerHTML += `
+                    <div class="flex items-center px-2">
+                        <div class="h-0.5 w-6 bg-pink-400"></div>
+                        <span class="text-pink-500 text-sm mx-1">❤️</span>
+                        <div class="h-0.5 w-6 bg-pink-400"></div>
+                    </div>
+                `;
+                groupDiv.innerHTML += createCardHTML(spouse);
+            });
+            
+            li.appendChild(groupDiv);
 
-            const card = document.createElement('div');
-            card.className = 'tree-node-card';
-            card.innerHTML = `
-                ${imageDisplay}
-                <div class="font-bold text-gray-800 text-sm break-words">${member.name}</div>
-                <div class="text-xs text-white bg-green-500 rounded-full px-2 py-1 mt-1 inline-block">${member.relation}</div>
-                ${member.location ? `<div class="text-xs text-gray-500 mt-2">📍 ${member.location}</div>` : ''}
-                ${member.phone ? `<div class="text-xs text-gray-500 mt-1">📞 ${member.phone}</div>` : ''}
-                <div class="mt-3 flex justify-center space-x-3">
-                    <button onclick="editMember('${member.id}')" class="text-blue-500 text-xs hover:text-blue-700 underline">แก้ไข</button>
-                    <button onclick="deleteMember('${member.id}')" class="text-red-400 text-xs hover:text-red-600 underline">ลบ</button>
-                </div>
-            `;
-            li.appendChild(card);
-
-            const children = familyMembers.filter(m => m.parentId === member.id);
+            // หาบุตร (คนที่อ้างอิงมาที่ member คนนี้ และเป็น child)
+            const children = familyMembers.filter(m => m.linkedId === member.id && m.linkType === 'child');
             if (children.length > 0) {
                 const ul = document.createElement('ul');
                 children.forEach(child => {
@@ -218,8 +264,9 @@
         }
 
         window.deleteMember = function(id) {
-            if(confirm('ต้องการลบข้อมูลนี้ใช่หรือไม่? ข้อมูลสายย่อยที่เชื่อมโยงอยู่จะถูกตั้งเป็นจุดเริ่มต้นใหม่')) {
-                familyMembers.forEach(m => { if (m.parentId === id) m.parentId = null; });
+            if(confirm('ต้องการลบข้อมูลนี้ใช่หรือไม่?')) {
+                // อัปเดตข้อมูลคนที่เชื่อมโยงอยู่ให้หลุดเป็นอิสระ
+                familyMembers.forEach(m => { if (m.linkedId === id) m.linkedId = null; });
                 familyMembers = familyMembers.filter(m => m.id !== id);
                 saveData();
                 updateSelectDropdown();
