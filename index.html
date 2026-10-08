@@ -9,10 +9,11 @@
     <style>
         body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
         
-        .tree-container { overflow-x: auto; padding-bottom: 40px; }
-        .tree { display: flex; justify-content: center; min-width: max-content; }
-        .tree ul { padding-top: 20px; position: relative; display: flex; justify-content: center; padding-left: 0; }
-        .tree li { text-align: center; list-style-type: none; position: relative; padding: 20px 10px 0 10px; }
+        .tree-container { overflow-x: auto; padding-bottom: 40px; cursor: grab; }
+        .tree-container:active { cursor: grabbing; }
+        .tree { display: flex; justify-content: center; min-width: max-content; padding: 20px; }
+        .tree ul { padding-top: 20px; position: relative; display: flex; justify-content: center; padding-left: 0; transition: all 0.3s; }
+        .tree li { text-align: center; list-style-type: none; position: relative; padding: 20px 10px 0 10px; transition: all 0.3s; }
         
         /* เส้นเชื่อมแนวนอน */
         .tree li::before, .tree li::after {
@@ -59,12 +60,10 @@
                 <div><label class="block text-sm text-gray-600 mb-1">จังหวัดที่อยู่ปัจจุบัน</label><input type="text" id="location" class="w-full border border-gray-300 rounded-lg p-2"></div>
                 <div class="md:col-span-2"><label class="block text-sm text-gray-600 mb-1">ลิงก์รูปภาพโปรไฟล์ (URL)</label><input type="url" id="imageUrl" class="w-full border border-gray-300 rounded-lg p-2"></div>
                 
-                <!-- เลือกบุคคลอ้างอิง -->
                 <div class="md:col-span-1">
                     <label class="block text-sm text-gray-600 mb-1">เชื่อมโยงกับ (ระบุบุคคลอ้างอิง)</label>
                     <select id="linkedId" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"><option value="">-- เป็นจุดเริ่มต้นสายตระกูล (Root) --</option></select>
                 </div>
-                <!-- เลือกประเภทการเชื่อมโยง (ลูก หรือ คู่สมรส) -->
                 <div class="md:col-span-1">
                     <label class="block text-sm text-gray-600 mb-1">สถานะต่อบุคคลอ้างอิง</label>
                     <select id="linkType" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500">
@@ -89,7 +88,6 @@
     <script>
         let familyMembers = JSON.parse(localStorage.getItem('familyData')) || [];
         
-        // อัปเดตข้อมูลเก่าให้เข้ากับระบบใหม่แบบอัตโนมัติ
         familyMembers = familyMembers.map(m => {
             if (m.parentId !== undefined) {
                 m.linkedId = m.parentId;
@@ -209,7 +207,6 @@
             }
             treeContainer.innerHTML = '';
             
-            // หาคนที่เป็นจุดเริ่มต้น (ไม่มีการเชื่อมโยงกับใคร)
             const rootMembers = familyMembers.filter(m => !m.linkedId);
             
             const treeDiv = document.createElement('div');
@@ -227,17 +224,12 @@
         function buildNodeHTML(member) {
             const li = document.createElement('li');
             
-            // หาคู่สมรสของคนนี้
             const spouses = familyMembers.filter(m => m.linkedId === member.id && m.linkType === 'spouse');
-            
-            // สร้างกลุ่มสำหรับวางเคียงข้างกัน
             const groupDiv = document.createElement('div');
-            groupDiv.className = 'flex items-center justify-center';
+            groupDiv.className = 'flex items-center justify-center relative z-10';
             
-            // ใส่การ์ดคนหลัก
             groupDiv.innerHTML = createCardHTML(member);
             
-            // ใส่การ์ดคู่สมรสเคียงข้าง (ถ้ามี)
             spouses.forEach(spouse => {
                 groupDiv.innerHTML += `
                     <div class="flex items-center px-2">
@@ -251,28 +243,62 @@
             
             li.appendChild(groupDiv);
 
-            // หาบุตร (คนที่อ้างอิงมาที่ member คนนี้ และเป็น child)
             const children = familyMembers.filter(m => m.linkedId === member.id && m.linkType === 'child');
             if (children.length > 0) {
                 const ul = document.createElement('ul');
                 children.forEach(child => {
                     ul.appendChild(buildNodeHTML(child));
                 });
+
+                // ปุ่มยุบ/ขยายสายย่อย
+                const toggleContainer = document.createElement('div');
+                toggleContainer.className = 'mt-3 mb-[-10px] relative z-20';
+                const toggleBtn = document.createElement('button');
+                toggleBtn.innerHTML = '🔽 ยุบสายย่อย';
+                toggleBtn.className = 'text-xs bg-gray-100 border border-gray-300 text-gray-600 px-3 py-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors';
+                
+                toggleBtn.onclick = function() {
+                    if (ul.style.display === 'none') {
+                        ul.style.display = 'flex';
+                        toggleBtn.innerHTML = '🔽 ยุบสายย่อย';
+                        toggleBtn.classList.replace('bg-green-100', 'bg-gray-100');
+                        toggleBtn.classList.replace('text-green-700', 'text-gray-600');
+                        toggleBtn.classList.replace('border-green-300', 'border-gray-300');
+                    } else {
+                        ul.style.display = 'none';
+                        toggleBtn.innerHTML = `▶️ ดูสายย่อย (${children.length})`;
+                        toggleBtn.classList.replace('bg-gray-100', 'bg-green-100');
+                        toggleBtn.classList.replace('text-gray-600', 'text-green-700');
+                        toggleBtn.classList.replace('border-gray-300', 'border-green-300');
+                    }
+                };
+                
+                toggleContainer.appendChild(toggleBtn);
+                li.appendChild(toggleContainer);
                 li.appendChild(ul);
             }
             return li;
         }
 
-        window.deleteMember = function(id) {
-            if(confirm('ต้องการลบข้อมูลนี้ใช่หรือไม่?')) {
-                // อัปเดตข้อมูลคนที่เชื่อมโยงอยู่ให้หลุดเป็นอิสระ
-                familyMembers.forEach(m => { if (m.linkedId === id) m.linkedId = null; });
-                familyMembers = familyMembers.filter(m => m.id !== id);
-                saveData();
-                updateSelectDropdown();
-                renderTree();
-            }
-        }
+        // ระบบให้ใช้นิ้วลากหรือเมาส์คลิกลากแผนผังซ้ายขวาได้
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        treeContainer.addEventListener('mousedown', (e) => {
+            isDown = true;
+            startX = e.pageX - treeContainer.offsetLeft;
+            scrollLeft = treeContainer.scrollLeft;
+        });
+        treeContainer.addEventListener('mouseleave', () => { isDown = false; });
+        treeContainer.addEventListener('mouseup', () => { isDown = false; });
+        treeContainer.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - treeContainer.offsetLeft;
+            const walk = (x - startX) * 2; 
+            treeContainer.scrollLeft = scrollLeft - walk;
+        });
     </script>
 </body>
 </html>
